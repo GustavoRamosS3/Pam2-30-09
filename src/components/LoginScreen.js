@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import credenciais from '../data/credenciais';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation }) => { // Adicione a prop navigation aqui
     const [email, setEmail] = useState('');
-    const [senha, setSenha] = useState('');
-
-    const handleLogin = () => {
-        const usuario = credenciais.find(u => u.email === email && u.senha === senha);
+    const [password, setPassword] = useState('');
+  
+    async function handleLogin() {
+      const options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'insomnia/8.6.1' },
+        body: JSON.stringify({ email, senha: password }) // Corrigido aqui
+      };
+  
+      try {
+        const response = await fetch('http://localhost:8080/usuario/login', options);
+        const data = await response.json();
         
-        if (usuario) {
-            navigation.navigate('Welcome', { usuario });
+        // Verifique se a resposta tem os dados do usuário e navegue se for o caso
+        if (data && data.usuario) { // Supondo que a resposta contém um objeto `usuario`
+          navigation.navigate('Welcome', { usuario: data.usuario }); // Passa os dados do usuário
         } else {
-            Alert.alert('Credenciais inválidas', 'Tente novamente.');
+          Alert.alert('Credenciais inválidas', 'Tente novamente.');
         }
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     return (
@@ -24,13 +35,15 @@ const LoginScreen = ({ navigation }) => {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
             />
             <TextInput
                 style={styles.input}
                 placeholder="Senha"
                 secureTextEntry
-                value={senha}
-                onChangeText={setSenha}
+                value={password} // Corrigido aqui
+                onChangeText={setPassword} // Corrigido aqui
             />
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Entrar</Text>
