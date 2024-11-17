@@ -1,89 +1,74 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {Text, TextInput, TouchableOpacity, View } from 'react-native';
+import styles from './LoginScreenStyle.js'
 
-const LoginScreen = ({ navigation }) => { // Adicione a prop navigation aqui
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-  
-    async function handleLogin() {
-      const options = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'insomnia/8.6.1' },
-        body: JSON.stringify({ email, senha: password }) // Corrigido aqui
-      };
-  
-      try {
-        const response = await fetch('http://localhost:8080/usuario/login', options);
-        const data = await response.json();
-        
-        // Verifique se a resposta tem os dados do usuário e navegue se for o caso
-        if (data && data.usuario) { // Supondo que a resposta contém um objeto `usuario`
-          navigation.navigate('Welcome', { usuario: data.usuario }); // Passa os dados do usuário
-        } else {
-          Alert.alert('Credenciais inválidas', 'Tente novamente.');
-        }
-      } catch (err) {
-        console.error(err);
-      }
+const LoginScreen = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState('');
+
+  async function handleLogin() {
+    const options = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'User-Agent': 'insomnia/8.6.1' },
+      body: JSON.stringify({ email: email, senha: password })
     };
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Login</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Senha"
-                secureTextEntry
-                value={password} // Corrigido aqui
-                onChangeText={setPassword} // Corrigido aqui
-            />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
-        </View>
-    );
-};
+    try {
+      const response = await fetch('http://localhost:8080/usuario/login', options);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+        setError('');
+      } else {
+        setError('Credenciais inválidas!');
+        setUserData(null);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Erro de conexão');
+    }
+  }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 16,
-        backgroundColor: "#2196f3"
-    },
-    title: {
-        fontSize: 24,
-        marginBottom: 20,
-        color: "#ffff"
-    },
-    input: {
-        height: 40,
-        borderColor: '#ffff',
-        color: '#ffff',
-        borderWidth: 1,
-        marginBottom: 15,
-        paddingHorizontal: 10,
-    },
-    button: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)', 
-        borderColor: '#ffff',
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingVertical: 10,
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#ffff',
-        fontSize: 16,
-    },
-});
+  if (userData) {
+    return (
+      <View style={styles.welcomeContainer}>
+        <Text style={styles.welcomeText}>Bem-vindo, {userData.data.usuario.nome}!</Text>
+        <Text style={styles.infoText}>Email: {userData.data.usuario.email}</Text>
+        <Text style={styles.infoText}>Sexo: {userData.data.usuario.sexo}</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => setUserData(null)}>
+          <Text style={styles.logoutButtonText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Tela de Login</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Senha"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Entrar</Text>
+      </TouchableOpacity>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+};
 
 export default LoginScreen;
